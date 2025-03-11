@@ -5,4 +5,4 @@ const ProfilSchema = new mongoose.Schema({
 });
 
 
-module.exports = mongoose.model('Profil', ProfilSchema);
+module.exports = mongoose.model('Profil', ProfilSchema,'profil');

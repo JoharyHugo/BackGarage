@@ -12,17 +12,17 @@ const UtilisateurSchema = new mongoose.Schema({
 });
 
 UtilisateurSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('motdepasse')) {
     return next(); //modification ou non du mdp
   }
-// Hachage mdp
+// Hachage
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  this.motdepasse = await bcrypt.hash(this.motdepasse, salt);
   next();
 });
 
-UtilisateurSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+UtilisateurSchema.methods.matchMotdepasse = async function(enteredMotdepasse) {
+  return await bcrypt.compare(enteredMotdepasse, this.motdepasse);
 };
 
-module.exports = mongoose.model('Utilisateur', UtilisateurSchema);
+module.exports = mongoose.model('Utilisateur', UtilisateurSchema,'utilisateur');

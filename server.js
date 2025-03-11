@@ -1,10 +1,12 @@
+// import lib
 const express=require('express');
 const mongoose=require('mongoose');
 const cors=require('cors');
 require('dotenv').config(); 
 
-const app = express(); 
-const PORT = process.env.PORT || 5000;
+// import routes
+const utilisateurRoutes = require('./routes/rt_utilisateur');
+
 
 // Middleware 
 app.use(cors());
@@ -16,6 +18,9 @@ mongoose.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true 
 }).then(() => console.log("MongoDB connecté"))   
 .catch(err => console.log(err)); 
+
+//Routes
+app.use('/api/utilisateur', utilisateurRoutes); 
 
 
 
