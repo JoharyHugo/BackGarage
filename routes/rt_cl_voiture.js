@@ -4,25 +4,48 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // import models
-const Utilisateur = require('../models/md_utilisateur');
-const UtilisateurToken = require('../models/md_token'); 
+const Marque = require('../models/md_marque');
+const Categorie = require('../models/md_categorie_vehicule');
+const Voiture = require('../models/md_voiture_client');
 
-// inscription
-router.post('/ajouter', async (req, res) => {
-    const { nom, email, motdepasse, phone, dateNaissance } = req.body;
+// ajouter Marque
+router.post('/ajouterMarque', async (req, res) => {
     try {
-      const userExist = await Utilisateur.findOne({ email });
-      if (userExist) {
-        return res.status(400).json({ message: 'Utilisateur déjà existant' });
-      } else {
-        const user = new Utilisateur({ nom, email, motdepasse, phone, dateNaissance, idprofil:"67cf3ee809a7752fcbb71239"});
-        await user.save();
-        res.status(201).json({ message: 'Utilisateur créé avec succès' });
-      }
+      const marque = new Marque(req.body);
+      await marque.save(); 
     } catch (error) {
-      console.error('Erreur lors de l\'inscription:', error);
+      console.error('Erreur lors de l\'ajout:', error);
       res.status(500).json({ message: 'Erreur serveur' });
     }
+});
+
+// ajouter Catégorie
+router.post('/ajouterCategorie', async (req, res) => {
+  try {
+    const categorie = new Categorie(req.body);
+    await categorie.save(); 
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ajouter voiture
+router.post('/ajouterVoiture', async (req, res) => {
+  try {
+    const { nomvoiture, immatriculation, idmarque, idcategorie } = req.body;
+    const existingVoiture = await Voiture.findOne({ immatriculation });
+    if (existingVoiture) {
+        return res.status(400).json({ message: "Ce véhicule existe déjà." });
+    }
+
+    const voiture = new Voiture({ nomvoiture, immatriculation, idmarque, idcategorie });
+    await voiture.save(); 
+    res.json({ message: 'Véhicule Ajouté'});
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 module.exports = router;
