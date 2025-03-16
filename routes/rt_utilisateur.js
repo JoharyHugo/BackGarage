@@ -88,6 +88,15 @@ const getUtilisateurConnecte = async (req, res) => {
     }
   };
   
+// liste les profils
+router.get('/listProfil', async (req, res) => {
+  try {
+  const profil = await Profil.find();
+  res.json({ profil });
+  } catch (error) {
+  res.status(500).json({ message: error.message });
+  }
+ })
 
 // Routes 
 router.post('/client/inscription', (req, res) => inscription(req, res, 'Client'));
