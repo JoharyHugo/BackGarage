@@ -8,6 +8,9 @@ const Marque = require('../models/md_marque');
 const Categorie = require('../models/md_categorie_vehicule');
 const Voiture = require('../models/md_voiture_client');
 
+// import middleware
+const protect = require('../middlewares/auth');
+
 // ajouter Marque
 router.post('/ajouterMarque', async (req, res) => {
     try {
@@ -31,21 +34,32 @@ router.post('/ajouterCategorie', async (req, res) => {
 });
 
 // ajouter voiture
-router.post('/ajouterVoiture', async (req, res) => {
+router.post('/ajouterVoiture', protect, async (req, res) => {
   try {
-    const { nomvoiture, immatriculation, idmarque, idcategorie } = req.body;
+    const { idmarque, idcategorie, nomvoiture, immatriculation } = req.body;
     const existingVoiture = await Voiture.findOne({ immatriculation });
     if (existingVoiture) {
         return res.status(400).json({ message: "Ce véhicule existe déjà." });
     }
-
-    const voiture = new Voiture({ nomvoiture, immatriculation, idmarque, idcategorie });
+    const voiture = new Voiture({idclient: req.user.userId, idmarque, idcategorie, nomvoiture, immatriculation });
     await voiture.save(); 
-    res.json({ message: 'Véhicule Ajouté'});
+    res.json({ message: 'Véhicule Ajouté' });
   } catch (error) {
     console.error('Erreur lors de l\'ajout:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+router.get('/listVoiturebyclient', async (req, res) => {
+  try {
+  const voitures = await Voiture.find({ idclient: req.user.userId });
+  if (voitures.length === 0) {
+    return res.status(400).json({ message: 'Aucune voiture trouvée pour cet utilisateur.' });
+  }
+  res.json({ voiture });
+  } catch (error) {
+  res.status(500).json({ message: error.message });
+  }
+ })
 
 module.exports = router;
