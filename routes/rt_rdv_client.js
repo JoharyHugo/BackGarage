@@ -15,11 +15,12 @@ const protect = require('../middlewares/auth');
 router.post('/ajouterRdv', protect, async (req, res) => {
     try {
       const {  idbloc, idetat, daterdv, voitureIds } = req.body;
+      const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
       const voituresExistantes = await Voiture.find({ '_id': { $in: voitureIds }, 'idclient': req.user.userId });// Vérifier si les voitures existent et appartiennent bien au client connecté
       if (voituresExistantes.length !== voitureIds.length) {
         return res.status(400).json({ message: 'Une ou plusieurs voitures sélectionnées n\'existent pas ou ne vous appartiennent pas' });
       }
-      const rdv = new Rdv({ idclient:req.user.userId, idbloc, idetat, daterdv, voitureIds });
+      const rdv = new Rdv({ idclient:req.user.userId, idbloc, idetat:etatEnAttente.id, daterdv, voitureIds });
       await rdv.save(); 
       res.json({ message: 'Rendez-vous ajouté avec succès', rdv });
     } catch (error) {
