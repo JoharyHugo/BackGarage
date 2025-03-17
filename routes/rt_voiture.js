@@ -12,7 +12,7 @@ const Voiture = require('../models/md_voiture_client');
 const protect = require('../middlewares/auth');
 
 // ajouter Marque
-router.post('/ajouterMarque', async (req, res) => {
+router.post('/ajouterMarque', protect, async (req, res) => {
     try {
       const marque = new Marque(req.body);
       await marque.save(); 
@@ -23,7 +23,7 @@ router.post('/ajouterMarque', async (req, res) => {
 });
 
 // ajouter Catégorie
-router.post('/ajouterCategorie', async (req, res) => {
+router.post('/ajouterCategorie', protect, async (req, res) => {
   try {
     const categorie = new Categorie(req.body);
     await categorie.save(); 
@@ -50,6 +50,7 @@ router.post('/ajouterVoiture', protect, async (req, res) => {
   }
 });
 
+// lister les voitures pour un client
 router.get('/listVoiturebyclient', async (req, res) => {
   try {
   const voitures = await Voiture.find({ idclient: req.user.userId });

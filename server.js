@@ -7,7 +7,7 @@ require('dotenv').config();
 // import routes
 const rt_utilisateur = require('./routes/rt_utilisateur');
 const rt_voiture = require('./routes/rt_voiture');
-
+const rt_rdv_client = require('./routes/rt_rdv_client');
 
 const app = express(); 
 const PORT = process.env.PORT || 5000;
@@ -26,6 +26,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // Routes
 app.use('/api', rt_utilisateur); 
 app.use('/api/client', rt_voiture); 
+app.use('/api/rdv', rt_rdv_client); 
 
 
 app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`))
