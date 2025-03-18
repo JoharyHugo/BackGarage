@@ -1,0 +1,89 @@
+db.profil.insertMany([
+    { nomprofil: "Client"},
+    { nomprofil: "Mécanicien" },
+    { nomprofil: "Manager" }
+])
+
+// api/client/inscription
+    {
+    "nom": "John Doe",
+    "email": "john@example.com",
+    "motdepasse": "motdepasse123",
+    "phone": "0341234567",
+    "dateNaissance": "1990-05-12T00:00:00Z"
+  }
+
+// api/client/login
+  {
+    "email": "john@example.com",
+    "motdepasse": "motdepasse123"
+  }
+
+  db.marque.insertMany([
+    { nommarque: "Toyota" },
+    { nommarque: "Ford" },
+    { nommarque: "Mercedes-Benz" },
+    { nommarque: "BMW" },
+    { nommarque: "Honda" },
+    { nommarque: "Yamaha" },
+    { nommarque: "Kawasaki" },
+    { nommarque: "Ducati" },
+    { nommarque: "Scania" },
+    { nommarque: "Volvo Trucks" },
+    { nommarque: "MAN" }
+  ])
+
+  db.categorie.insertMany([
+    { nomcategorie: "Moto" },
+    { nomcategorie: "SUV" },
+    { nomcategorie: "4x4" },
+    { nomcategorie: "Camion léger" },
+    { nomcategorie: "Camion lourd" },
+    { nomcategorie: "Berline" }
+])
+
+// api/client/ajouterVoiture
+
+// *** tokony efa azony ilay idclient raha efa misy token am bearer postman sinon RIEN
+{
+    "nomvoiture": "Peugeot 308",
+    "immatriculation": "4567DEF",
+    "idmarque": "", // objectID any am marque
+    "idcategorie": "" // objectID any am categorie
+  }
+
+  db.etat.insertMany([
+    { etat: "en attente" },
+    { etat: "présence" },
+    { etat: "absence" },
+    { etat: "terminé" }
+  ]);
+
+  // mbola vao hanadrana an'ilay ordre Date ndray alou za fa ataovy am io aloha
+  db.blocheure.insertMany([
+    { bloc: "7h-8h" },
+    { bloc: "8h-9h" },
+    { bloc: "9h-10h" },
+    { bloc: "10h-11h" },
+    { bloc: "11h-12h" },
+    { bloc: "12h-13h" },
+    { bloc: "13h-14h" },
+    { bloc: "14h-15h" },
+    { bloc: "15h-16h" },
+    { bloc: "16h-17h" }
+  ]);
+
+// api/rdv/ajouterRdv
+
+
+// *** tokony efa azony ilay idclient raha efa misy token am bearer postman sinon RIEN
+
+  {
+    "idbloc": "", // objectID bloc heure
+    "idetat": "", // objectID etat rdv
+    "daterdv": "2024-03-19T10:00:00.000Z",
+    "voitureIds": [
+      "",
+      "" // objectID voiture alefa client am io RDV io 
+    ]
+  }
