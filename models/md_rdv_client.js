@@ -8,4 +8,13 @@ const RdvSchema = new mongoose.Schema({
     voitureIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Voiture', required: true }]
 });
 
+RdvSchema.statics.TriRdvs = function(rdvs) {
+    return rdvs.sort((a, b) => {
+        if (new Date(a.daterdv).getTime() !== new Date(b.daterdv).getTime()) {
+            return new Date(a.daterdv) - new Date(b.daterdv); // Tri par date
+        }
+        return a.idbloc.ordre - b.idbloc.ordre; // Tri par horaire
+    });
+};
+
 module.exports = mongoose.model('Rdv', RdvSchema, 'rdvclient');

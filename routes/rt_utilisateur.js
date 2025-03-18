@@ -8,6 +8,9 @@ const Utilisateur = require('../models/md_utilisateur');
 const Profil = require('../models/md_profil');
 const UtilisateurToken = require('../models/md_token');
 
+// import middleware
+const protect = require('../middlewares/auth');
+
 // inscription
 const inscription = async (req, res, nomprofil) => {
     const { nom, email, motdepasse, phone, dateNaissance } = req.body;
@@ -38,17 +41,14 @@ const connection = async (req, res, nomprofil) => {
         if (!profil) {
             return res.status(400).json({ message: `Profil "${nomprofil}" introuvable` });
         }
-
         const user = await Utilisateur.findOne({ email, idprofil: profil.id });
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
-
-        const isMatch = await user.matchMotdepasse(motdepasse);
+        const isMatch = await user.matchMotdepasse(motdepasse); // comparaison mdp
         if (!isMatch) {
             return res.status(400).json({ message: 'Mot de passe incorrect' });
         }
-
         const token = jwt.sign(
             { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
@@ -67,26 +67,17 @@ const connection = async (req, res, nomprofil) => {
 // Utilisateur connecté
 const getUtilisateurConnecte = async (req, res) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        if (!token) {
-            return res.status(400).json({ message: 'Token manquant, accès refusé' });
-        }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); // décode le token {contient gnrlmt ID utilisateur }
-        const utilisateurToken = await UtilisateurToken.findOne({ token }); // Trouver l'utilisateur à partir du token
-        if (!utilisateurToken) {
-            return res.status(400).json({ message: 'Token invalide ou expiré' });
-        }
-        const utilisateur = await Utilisateur.findById(decoded.userId);
+        const utilisateur = await Utilisateur.findById(req.user.userId);
         if (!utilisateur) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
-  
         res.json({ utilisateur });
     } catch (error) {
-        console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+        console.error("Erreur lors de la récupération de l'utilisateur:", error);
         res.status(500).json({ message: 'Erreur serveur' });
     }
-  };
+};
+
   
 // liste les profils
 router.get('/listProfil', async (req, res) => {
@@ -108,6 +99,6 @@ router.post('/mecanicien/login', (req, res) => connection(req, res, 'Mécanicien
 router.post('/manager/inscription', (req, res) => inscription(req, res, 'Manager'));
 router.post('/manager/login', (req, res) => connection(req, res, 'Manager'));
 
-router.get('/utilisateurConnecte', getUtilisateurConnecte);
+router.get('/utilisateurConnecte', protect, getUtilisateurConnecte);
 
 module.exports = router;

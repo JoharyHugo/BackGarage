@@ -22,6 +22,16 @@ router.post('/ajouterMarque', protect, async (req, res) => {
     }
 });
 
+// liste Marque
+router.get('/listMarque', async (req, res) => {
+  try {
+  const marque = await Marque.find();
+  res.json({ marque });
+  } catch (error) {
+  res.status(500).json({ message: error.message });
+  }
+ })
+
 // ajouter Catégorie
 router.post('/ajouterCategorie', protect, async (req, res) => {
   try {
@@ -33,7 +43,17 @@ router.post('/ajouterCategorie', protect, async (req, res) => {
   }
 });
 
-// ajouter voiture
+// liste des catégories
+router.get('/listCategorie', async (req, res) => {
+  try {
+  const categorie = await Categorie.find();
+  res.json({ categorie });
+  } catch (error) {
+  res.status(500).json({ message: error.message });
+  }
+ })
+
+// ajouter voiture pour un client
 router.post('/ajouterVoiture', protect, async (req, res) => {
   try {
     const { idmarque, idcategorie, nomvoiture, immatriculation } = req.body;
@@ -51,13 +71,14 @@ router.post('/ajouterVoiture', protect, async (req, res) => {
 });
 
 // lister les voitures pour un client
-router.get('/listVoiturebyclient', async (req, res) => {
+router.get('/listVoiturebyclient', protect, async (req, res) => {
   try {
   const voitures = await Voiture.find({ idclient: req.user.userId });
+  console.log("ID =====",req.user.userId );
   if (voitures.length === 0) {
     return res.status(400).json({ message: 'Aucune voiture trouvée pour cet utilisateur.' });
   }
-  res.json({ voiture });
+  res.json({ voitures });
   } catch (error) {
   res.status(500).json({ message: error.message });
   }
