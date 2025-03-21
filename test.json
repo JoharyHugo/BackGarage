@@ -52,6 +52,27 @@ db.profil.insertMany([
     "idcategorie": "" // objectID any am categorie
   }
 
+  {
+    "nomvoiture": "Peugeot 208",
+    "immatriculation": "1234ABC",
+    "idmarque": "", // objectID any am marque
+    "idcategorie": "" // objectID any am categorie
+  }
+
+  {
+    "nomvoiture": "Peugeot 308",
+    "immatriculation": "4567DEF",
+    "idmarque": "", // objectID any am marque
+    "idcategorie": "" // objectID any am categorie
+  }
+
+  {
+    "nomvoiture": "Toyota rush",
+    "immatriculation": "3645TDB",
+    "idmarque": "67d3e211849e3bcb9cb71236", 
+    "idcategorie": "67d3e4d9849e3bcb9cb7124e"
+  } 
+
   db.etat.insertMany([
     { etat: "en attente" },
     { etat: "présence" },

@@ -22,9 +22,9 @@ router.get('/listBlocHeure', protect, async (req, res) => {
 });
 
 // liste blocheure dispo
-router.get('/listBlocDispo', protect, async (req, res) => {
+router.get('/listBlocDispo/:date', protect, async (req, res) => {
     try {
-        const { date } = req.query;
+        const  date  = req.params.date;
         if (!date) {
             return res.status(400).json({ message: "Veuillez fournir une date valide." });
         }
@@ -77,5 +77,22 @@ router.get('/admin/listRdv', protect, async (req, res) => {
     }
 });
 
+const checkRdv = async (req, res, check) => {
+    try {
+        const { rdvId } = req.body;
+        const etat = await Etat.findOne({ etat: check });
+        if (!etat) {
+            return res.status(404).json({ message: "État non trouvé" });
+        }
+        const rdv = await Rdv.findByIdAndUpdate(rdvId, { idetat: etat._id });
+        res.status(200).json({ message: "L'état du rendez-vous a été mis à jour avec succès.", rdv });
+    } catch (error) {
+        console.error(`Erreur lors de la connexion (${check}):`, error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+
+router.put('/presence', (req, res) => checkRdv(req, res, 'présence'));
+router.put('/absence', (req, res) => checkRdv(req, res, 'absence'));
 
 module.exports = router;
