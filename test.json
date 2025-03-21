@@ -5,7 +5,7 @@ db.profil.insertMany([
 ])
 
 // api/client/inscription
-    {
+  {
     "nom": "John Doe",
     "email": "john@example.com",
     "motdepasse": "motdepasse123",
