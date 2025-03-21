@@ -37,7 +37,7 @@ router.get('/listBlocDispo/:date', protect, async (req, res) => {
 
 router.post('/ajouterRdv', protect, async (req, res) => {
     try {
-        const { idbloc, idetat, daterdv, voitureIds } = req.body;
+        const { idbloc, daterdv, voitureIds } = req.body;
         const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
         const voituresExistantes = await Voiture.find({ '_id': { $in: voitureIds }, 'idclient': req.user.userId });
         if (voituresExistantes.length !== voitureIds.length) {
