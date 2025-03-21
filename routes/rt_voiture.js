@@ -7,6 +7,7 @@ const router = express.Router();
 const Marque = require('../models/md_marque');
 const Categorie = require('../models/md_categorie_vehicule');
 const Voiture = require('../models/md_voiture_client');
+const Bloc = require('../models/md_bloc_heure_rdv');
 
 // import middleware
 const protect = require('../middlewares/auth');
@@ -23,7 +24,7 @@ router.post('/ajouterMarque', protect, async (req, res) => {
 });
 
 // liste Marque
-router.get('/listMarque', async (req, res) => {
+router.get('/listMarque', protect, async (req, res) => {
   try {
   const marque = await Marque.find();
   res.json({ marque });
@@ -44,7 +45,7 @@ router.post('/ajouterCategorie', protect, async (req, res) => {
 });
 
 // liste des catégories
-router.get('/listCategorie', async (req, res) => {
+router.get('/listCategorie', protect, async (req, res) => {
   try {
   const categorie = await Categorie.find();
   res.json({ categorie });
