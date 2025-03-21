@@ -52,27 +52,27 @@ router.get('/listSsServbyService', protect, async (req, res) => {
 router.get('/listTarif', protect, async (req, res) => {
     try {
         const { idService, idSousService } = req.body;
-
-        // Recherche le service par id
         const service = await Service.findById(idService).select('sousServices');
-
-        if (!service) {
-            return res.status(404).json({ message: "Service non trouvé." });
-        }
-
-        // Trouver le sous-service spécifique
-        const sousService = service.sousServices.id(idSousService);  // Trouve par _id du sous-service
-
+        const sousService = service.sousServices.id(idSousService);
         if (!sousService) {
             return res.status(404).json({ message: "Sous-service non trouvé." });
         }
-
-        // Retourner les tarifs du sous-service trouvé
-        res.json(sousService.tarifs);  // Renvoie les tarifs associés à ce sous-service
+        await Service.populate(sousService, {
+            path: 'tarifs.idcategorie',
+            model: 'Categorie'
+        });
+        const tarifsAvecCategorie = sousService.tarifs.map(tarif => ({
+            prix: tarif.prix,
+            idcategorie: tarif.idcategorie._id, 
+            nomcategorie: tarif.idcategorie.nomcategorie 
+        }));
+        res.json(tarifsAvecCategorie);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
+
+
 
 
 // ajout Sous-service
