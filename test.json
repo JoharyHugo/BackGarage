@@ -108,3 +108,15 @@ db.profil.insertMany([
     ]
   }
 
+// rdv en attente ave ou sans selection de date
+//GET http://localhost:5000/api/rdv/admin/listRdvDate/2025-03-28 ou listRdvDate
+
+
+
+
+
+// PUT http://localhost:5000/api/rdv/presence ou  absence
+  {
+    "rdvId": "67e76a053e4eb7a14d2728b1"
+}
+

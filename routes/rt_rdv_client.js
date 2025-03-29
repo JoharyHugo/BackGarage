@@ -35,6 +35,7 @@ router.get('/listBlocDispo/:date', protect, async (req, res) => {
     }
 });
 
+// ajout RDV
 router.post('/ajouterRdv', protect, async (req, res) => {
     try {
         const { idbloc, daterdv, voitureIds } = req.body;
@@ -52,30 +53,7 @@ router.post('/ajouterRdv', protect, async (req, res) => {
     }
 });
 
-router.get('/admin/listRdv', protect, async (req, res) => {
-    try {
-        const datetri = req.query.datetri ? new Date(req.query.datetri) : new Date();
-        const startOfDay = new Date(datetri.setHours(0, 0, 0, 0)); // début jour à minuit
-        const endOfDay = new Date(datetri.setHours(23, 59, 59, 999)); // fin jour à minuit -1
-        const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
-        let rdvs = await Rdv.find({ idetat: etatEnAttente._id , daterdv: { $gte: startOfDay, $lte: endOfDay } })  // populate = jointure 
-            .populate('idbloc') 
-            .populate('idclient', 'nom idprofil') 
-            .populate({
-                path: 'voitureIds',
-                select: 'immatriculation',
-                populate: [
-                    { path: 'idmarque', select: 'nommarque' },
-                    { path: 'idcategorie', select: 'nomcategorie' }
-                ]
-            });
-        rdvs = Rdv.TriRdvs(rdvs); // fonction tri
-        res.status(200).json(rdvs);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
+// aide pour chgt état
 const checkRdv = async (req, res, check) => {
     try {
         const { rdvId } = req.body;
@@ -91,7 +69,68 @@ const checkRdv = async (req, res, check) => {
     }
 };
 
+// liste rdv en attente par date sélectionné sinon aujourd'hui
+router.get('/admin/listRdvDate/:datetri?', protect, async (req, res) => {
+    try {
+        const { datetri } = req.params;
+        const dateT = datetri ? new Date(datetri) : new Date();
+
+        const startOfDay = new Date(dateT.setHours(0, 0, 0, 0)); 
+        const endOfDay = new Date(dateT.setHours(23, 59, 59, 999)); 
+        const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
+        console.log(etatEnAttente._id);
+        let rdvs = await Rdv.find({ idetat: etatEnAttente._id , daterdv: { $gte: startOfDay, $lte: endOfDay } })  // populate = jointure 
+            .populate('idbloc') 
+            .populate('idclient', 'nom idprofil') 
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation  idmarque idcategorie',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' }, 
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            });
+        rdvs = Rdv.TriRdvsC(rdvs); // fonction tri
+        res.status(200).json(rdvs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// A titre d'historique
+const getListRdvByEtat = async (req, res, etat) => {
+    try {
+        const etatq = await Etat.findOne({ etat });
+        let rdvs = await Rdv.find({ idetat: etatq._id})
+            .populate('idbloc') 
+            .populate('idclient', 'nom idprofil') 
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation idmarque idcategorie',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' }, 
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            })
+            .sort({ daterdv: -1, 'idbloc.ordre': -1 }) ;
+        res.status(200).json(rdvs);
+    } catch (error) {
+        console.error(`Erreur lors de la récupération des RDVs (${etat}):`, error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+
+// route de présence ou absence
 router.put('/presence', (req, res) => checkRdv(req, res, 'présence'));
 router.put('/absence', (req, res) => checkRdv(req, res, 'absence'));
+
+
+// route d'historique
+router.get('/admin/listRdv/enattente', protect, (req, res) => getListRdvByEtat(req, res, 'en attente'));
+router.get('/admin/listRdv/presence', protect, (req, res) => getListRdvByEtat(req, res, 'présence'));
+router.get('/admin/listRdv/absence', protect, (req, res) => getListRdvByEtat(req, res, 'absence'));
+router.get('/admin/listRdv/termine', protect, (req, res) => getListRdvByEtat(req, res, 'terminé'));
+router.get('/admin/listRdv/encoursdevis', protect, (req, res) => getListRdvByEtat(req, res, 'en cours de devis'));
+
 
 module.exports = router;
