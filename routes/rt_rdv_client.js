@@ -52,7 +52,6 @@ router.post('/ajouterRdv', protect, async (req, res) => {
     }
 });
 
-
 router.get('/admin/listRdv', protect, async (req, res) => {
     try {
         const datetri = req.query.datetri ? new Date(req.query.datetri) : new Date();

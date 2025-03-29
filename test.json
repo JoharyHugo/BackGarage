@@ -101,10 +101,10 @@ db.profil.insertMany([
 
   {
     "idbloc": "", // objectID bloc heure
-    "idetat": "", // objectID etat rdv
     "daterdv": "2024-03-19T10:00:00.000Z",
     "voitureIds": [
       "",
       "" // objectID voiture alefa client am io RDV io 
     ]
   }
+
