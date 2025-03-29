@@ -112,11 +112,19 @@ db.profil.insertMany([
 //GET http://localhost:5000/api/rdv/admin/listRdvDate/2025-03-28 ou listRdvDate
 
 
-
-
-
 // PUT http://localhost:5000/api/rdv/presence ou  absence
   {
-    "rdvId": "67e76a053e4eb7a14d2728b1"
+    "rdvId": ""
 }
 
+// liste voiture pour un rdv : admin/listVoituresRdv
+{
+  "rdvId": ""
+}
+
+
+// liste service et liste sous-service pour 1 service et un catégorie http://localhost:5000/api/service/listSsServCateg
+{
+  "serviceId": "",
+  "categorieId": ""
+}

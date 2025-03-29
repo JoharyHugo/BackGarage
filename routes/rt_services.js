@@ -7,7 +7,6 @@ const router = express.Router();
 const Service = require('../models/md_services');
 const Categorie = require('../models/md_categorie_vehicule');
 
-
 // import middleware
 const protect = require('../middlewares/auth');
 
@@ -37,7 +36,39 @@ router.get('/listService', protect, async (req, res) => {
     }
 });
 
-// liste des souservices pour un services
+// liste sous-services par services et catégories déjà définis
+router.get('/listSsServCateg', protect, async (req, res) => {
+    try {
+        const { serviceId, categorieId } = req.body;
+        const service = await Service.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ message: "Service non trouvé." });
+        }
+        const sousServicesFiltres = service.sousServices.map(sousService => {
+            const tarifsFiltres = sousService.tarifs.filter(tarif => 
+                tarif.idcategorie.equals(categorieId)
+            );
+            if (tarifsFiltres.length > 0) {
+                return {
+                    nom: sousService.nom,
+                    description: sousService.description,
+                    tarifs: tarifsFiltres.map(tarif => ({
+                        prix: tarif.prix,
+                        idcategorie: tarif.idcategorie,
+                        _id: tarif._id
+                    }))
+                };
+            }
+            return null;
+        }).filter(sousService => sousService !== null); 
+        res.json({ service: service.nom, sousServices: sousServicesFiltres });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// liste des sous-services pour un services
 router.get('/listSsServbyService', protect, async (req, res) => {
     try {
         const { idService } = req.body;
@@ -49,7 +80,7 @@ router.get('/listSsServbyService', protect, async (req, res) => {
 });
 
 // liste des tarif par sous-service et catégorie
-router.get('/listTarif', protect, async (req, res) => {
+router.get('/listTarifbySsService', protect, async (req, res) => {
     try {
         const { idService, idSousService } = req.body;
         const service = await Service.findById(idService).select('sousServices');
@@ -71,9 +102,6 @@ router.get('/listTarif', protect, async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
-
-
 
 // ajout Sous-service
 router.post("/ajouterSousService", protect, async (req, res) => {

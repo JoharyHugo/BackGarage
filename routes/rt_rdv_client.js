@@ -78,7 +78,7 @@ router.get('/admin/listRdvDate/:datetri?', protect, async (req, res) => {
         const startOfDay = new Date(dateT.setHours(0, 0, 0, 0)); 
         const endOfDay = new Date(dateT.setHours(23, 59, 59, 999)); 
         const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
-        console.log(etatEnAttente._id);
+        // console.log(etatEnAttente._id);
         let rdvs = await Rdv.find({ idetat: etatEnAttente._id , daterdv: { $gte: startOfDay, $lte: endOfDay } })  // populate = jointure 
             .populate('idbloc') 
             .populate('idclient', 'nom idprofil') 
@@ -92,6 +92,29 @@ router.get('/admin/listRdvDate/:datetri?', protect, async (req, res) => {
             });
         rdvs = Rdv.TriRdvsC(rdvs); // fonction tri
         res.status(200).json(rdvs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// liste de voiture pour tel RDV
+router.get('/admin/listVoituresRdv', protect, async (req, res) => {
+    try {
+        const { rdvId } = req.body; 
+        const rdv = await Rdv.findById(rdvId)
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation idmarque idcategorie',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' },
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            });
+        if (!rdv) {
+            return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        }
+        const voitures = rdv.voitureIds.map(voiture => voiture.voiture);
+        res.status(200).json({ voitures });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
