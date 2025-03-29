@@ -8,6 +8,9 @@ const Etat = require('../models/md_etat');
 const Bloc = require('../models/md_bloc_heure_rdv');
 const Rdv = require('../models/md_rdv_client');
 const Voiture = require('../models/md_voiture_client');
+const Service = require('../models/md_services');
+const Categorie = require('../models/md_categorie_vehicule');
+const Statut = require('../models/md_statut');
 
 // import middleware
 const protect = require('../middlewares/auth');
@@ -104,7 +107,7 @@ router.get('/admin/listVoituresRdv', protect, async (req, res) => {
         const rdv = await Rdv.findById(rdvId)
             .populate({
                 path: 'voitureIds.voiture',
-                select: 'immatriculation idmarque idcategorie',
+                select: 'immatriculation idmarque idcategorie _id',
                 populate: [
                     { path: 'idmarque', select: 'nommarque' },
                     { path: 'idcategorie', select: 'nomcategorie' }
@@ -113,7 +116,7 @@ router.get('/admin/listVoituresRdv', protect, async (req, res) => {
         if (!rdv) {
             return res.status(404).json({ message: "Rendez-vous non trouvé." });
         }
-        const voitures = rdv.voitureIds.map(voiture => voiture.voiture);
+        const voitures = rdv.voitureIds.map(voiture => ({_id: voiture._id,  voiture: voiture.voiture }));
         res.status(200).json({ voitures });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -155,5 +158,33 @@ router.get('/admin/listRdv/absence', protect, (req, res) => getListRdvByEtat(req
 router.get('/admin/listRdv/termine', protect, (req, res) => getListRdvByEtat(req, res, 'terminé'));
 router.get('/admin/listRdv/encoursdevis', protect, (req, res) => getListRdvByEtat(req, res, 'en cours de devis'));
 
+// ajout devis sous service pour une voiture à un RDV
+router.post('/addDevisRdvVoiture', protect, async (req, res) => {
+    try {
+        const { rdvId, idService, idCategorie, devis, idVoiture } = req.body;
+        const rdv = await Rdv.findById(rdvId);
+        if (!rdv) {return res.status(404).json({ message: "Rendez-vous non trouvé." });}        
+        const service = await Service.findById(idService); // Récupérer le service avec ses sous-services
+        if (!service) {return res.status(404).json({ message: "Service non trouvé." });}
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture.toString() === idVoiture);
+        if (!voitureRdv) {return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });}
+        const devisSousServices = await Promise.all(devis.map(async (devisData) => { // Création des devis sous-services
+            const { idsousservice, etatService } = devisData;
+            const sousService = service.sousServices.find(sub => sub._id.toString() === idsousservice); // les sous-serverices qui existent
+            if (!sousService) {
+                throw new Error("Sous-service non trouvé.");
+            } 
+            const tarif = sousService.tarifs.find(tarif => tarif.idcategorie.toString() === idCategorie);  // tarif pour tel catégorie de voiture
+            const statut = await Statut.findOne({ statut: "en attente" });
+            return {idsousservice: sousService._id, idstatut: statut._id, tarif: tarif.prix, devisMatériel: []  };
+        }));
+        const devisService = { idservice: service._id, devis: devisSousServices }; // devisService
+        voitureRdv.devis.push(devisService);
+        await rdv.save();
+        res.status(200).json({ message: "Devis ajouté avec succès au rendez-vous.", rdv });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
