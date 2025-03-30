@@ -19,6 +19,19 @@ db.profil.insertMany([
     "motdepasse": "motdepasse123"
   }
 
+  // api/manager/inscription
+  {
+    "nom": "Joe Dalton",
+    "email": "joe@example.com",
+    "motdepasse": "pass",
+    "phone": "0321234567",
+    "dateNaissance": "1990-05-12T00:00:00Z"
+  }
+  // api/manager/login
+  {
+    "email": "joe@example.com",
+    "motdepasse": "pass"
+  }
   db.marque.insertMany([
     { nommarque: "Toyota" },
     { nommarque: "Ford" },
