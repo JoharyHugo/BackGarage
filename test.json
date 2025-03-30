@@ -135,6 +135,13 @@ db.profil.insertMany([
   "rdvId": ""
 }
 
+db.statut.insertMany([
+  { statut: 'en attente' },
+  { statut: 'accepté' },
+  { statut: 'refusé' },
+  { statut: 'en cours' },
+  { statut: 'terminé' }
+]);
 
 // liste service et liste sous-service pour 1 service et un catégorie http://localhost:5000/api/service/listSsServCateg
 {
