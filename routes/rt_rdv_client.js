@@ -8,6 +8,9 @@ const Etat = require('../models/md_etat');
 const Bloc = require('../models/md_bloc_heure_rdv');
 const Rdv = require('../models/md_rdv_client');
 const Voiture = require('../models/md_voiture_client');
+const Service = require('../models/md_services');
+const Categorie = require('../models/md_categorie_vehicule');
+const Statut = require('../models/md_statut');
 
 // import middleware
 const protect = require('../middlewares/auth');
@@ -35,6 +38,7 @@ router.get('/listBlocDispo/:date', protect, async (req, res) => {
     }
 });
 
+// ajout RDV
 router.post('/ajouterRdv', protect, async (req, res) => {
     try {
         const { idbloc, daterdv, voitureIds } = req.body;
@@ -52,30 +56,7 @@ router.post('/ajouterRdv', protect, async (req, res) => {
     }
 });
 
-router.get('/admin/listRdv', protect, async (req, res) => {
-    try {
-        const datetri = req.query.datetri ? new Date(req.query.datetri) : new Date();
-        const startOfDay = new Date(datetri.setHours(0, 0, 0, 0)); // début jour à minuit
-        const endOfDay = new Date(datetri.setHours(23, 59, 59, 999)); // fin jour à minuit -1
-        const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
-        let rdvs = await Rdv.find({ idetat: etatEnAttente._id , daterdv: { $gte: startOfDay, $lte: endOfDay } })  // populate = jointure 
-            .populate('idbloc') 
-            .populate('idclient', 'nom idprofil') 
-            .populate({
-                path: 'voitureIds',
-                select: 'immatriculation',
-                populate: [
-                    { path: 'idmarque', select: 'nommarque' },
-                    { path: 'idcategorie', select: 'nomcategorie' }
-                ]
-            });
-        rdvs = Rdv.TriRdvs(rdvs); // fonction tri
-        res.status(200).json(rdvs);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
+// aide pour chgt état
 const checkRdv = async (req, res, check) => {
     try {
         const { rdvId } = req.body;
@@ -91,7 +72,119 @@ const checkRdv = async (req, res, check) => {
     }
 };
 
+// liste rdv en attente par date sélectionné sinon aujourd'hui
+router.get('/admin/listRdvDate/:datetri?', protect, async (req, res) => {
+    try {
+        const { datetri } = req.params;
+        const dateT = datetri ? new Date(datetri) : new Date();
+
+        const startOfDay = new Date(dateT.setHours(0, 0, 0, 0)); 
+        const endOfDay = new Date(dateT.setHours(23, 59, 59, 999)); 
+        const etatEnAttente = await Etat.findOne({ etat: 'en attente' });
+        // console.log(etatEnAttente._id);
+        let rdvs = await Rdv.find({ idetat: etatEnAttente._id , daterdv: { $gte: startOfDay, $lte: endOfDay } })  // populate = jointure 
+            .populate('idbloc') 
+            .populate('idclient', 'nom idprofil') 
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation  idmarque idcategorie',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' }, 
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            });
+        rdvs = Rdv.TriRdvsC(rdvs); // fonction tri
+        res.status(200).json(rdvs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// liste de voiture pour tel RDV
+router.get('/admin/listVoituresRdv', protect, async (req, res) => {
+    try {
+        const { rdvId } = req.body; 
+        const rdv = await Rdv.findById(rdvId)
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation idmarque idcategorie _id',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' },
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            });
+        if (!rdv) {
+            return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        }
+        const voitures = rdv.voitureIds.map(voiture => ({_id: voiture._id,  voiture: voiture.voiture }));
+        res.status(200).json({ voitures });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// A titre d'historique
+const getListRdvByEtat = async (req, res, etat) => {
+    try {
+        const etatq = await Etat.findOne({ etat });
+        let rdvs = await Rdv.find({ idetat: etatq._id})
+            .populate('idbloc') 
+            .populate('idclient', 'nom idprofil') 
+            .populate({
+                path: 'voitureIds.voiture',
+                select: 'immatriculation idmarque idcategorie',
+                populate: [
+                    { path: 'idmarque', select: 'nommarque' }, 
+                    { path: 'idcategorie', select: 'nomcategorie' }
+                ]
+            })
+            .sort({ daterdv: -1, 'idbloc.ordre': -1 }) ;
+        res.status(200).json(rdvs);
+    } catch (error) {
+        console.error(`Erreur lors de la récupération des RDVs (${etat}):`, error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+
+// route de présence ou absence
 router.put('/presence', (req, res) => checkRdv(req, res, 'présence'));
 router.put('/absence', (req, res) => checkRdv(req, res, 'absence'));
+
+
+// route d'historique
+router.get('/admin/listRdv/enattente', protect, (req, res) => getListRdvByEtat(req, res, 'en attente'));
+router.get('/admin/listRdv/presence', protect, (req, res) => getListRdvByEtat(req, res, 'présence'));
+router.get('/admin/listRdv/absence', protect, (req, res) => getListRdvByEtat(req, res, 'absence'));
+router.get('/admin/listRdv/termine', protect, (req, res) => getListRdvByEtat(req, res, 'terminé'));
+router.get('/admin/listRdv/encoursdevis', protect, (req, res) => getListRdvByEtat(req, res, 'en cours de devis'));
+
+// ajout devis sous service pour une voiture à un RDV
+router.post('/addDevisRdvVoiture', protect, async (req, res) => {
+    try {
+        const { rdvId, idService, idCategorie, devis, idVoiture } = req.body;
+        const rdv = await Rdv.findById(rdvId);
+        if (!rdv) {return res.status(404).json({ message: "Rendez-vous non trouvé." });}        
+        const service = await Service.findById(idService); // Récupérer le service avec ses sous-services
+        if (!service) {return res.status(404).json({ message: "Service non trouvé." });}
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture.toString() === idVoiture);
+        if (!voitureRdv) {return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });}
+        const devisSousServices = await Promise.all(devis.map(async (devisData) => { // Création des devis sous-services
+            const { idsousservice, etatService } = devisData;
+            const sousService = service.sousServices.find(sub => sub._id.toString() === idsousservice); // les sous-serverices qui existent
+            if (!sousService) {
+                throw new Error("Sous-service non trouvé.");
+            } 
+            const tarif = sousService.tarifs.find(tarif => tarif.idcategorie.toString() === idCategorie);  // tarif pour tel catégorie de voiture
+            const statut = await Statut.findOne({ statut: "en attente" });
+            return {idsousservice: sousService._id, idstatut: statut._id, tarif: tarif.prix, devisMatériel: []  };
+        }));
+        const devisService = { idservice: service._id, devis: devisSousServices }; // devisService
+        voitureRdv.devis.push(devisService);
+        await rdv.save();
+        res.status(200).json({ message: "Devis ajouté avec succès au rendez-vous.", rdv });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;

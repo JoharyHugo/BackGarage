@@ -1,8 +1,27 @@
 const mongoose = require('mongoose');
 
+const devisMatérielSchema = new mongoose.Schema({
+    idpiece: { type: mongoose.Schema.Types.ObjectId, ref: 'Piece', required: true },
+    prix: { type: Number, required: true }, 
+    quantite: { type: Number, required: true } 
+});
+
+const devisSousServiceSchema = new mongoose.Schema({
+    idsousservice: { type: mongoose.Schema.Types.ObjectId, ref: 'SousService', required: true },
+    idstatut: { type: mongoose.Schema.Types.ObjectId, ref: '', required: true },
+    tarif: { type: Number, required: true }, 
+    devisMatériel: [devisMatérielSchema] 
+});
+
+const devisServiceSchema = new mongoose.Schema({
+    idservice: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
+    devis: [devisSousServiceSchema]
+});
+
 const voitureRdvSchema = new mongoose.Schema({
-    _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() }, // Génération automatique d'un ID
-    voiture: { type: mongoose.Schema.Types.ObjectId, ref: 'Voiture', required: true }
+    _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    voiture: { type: mongoose.Schema.Types.ObjectId, ref: 'Voiture', required: true },
+    devis: [devisServiceSchema]
 });
 
 const RdvSchema = new mongoose.Schema({
@@ -13,7 +32,7 @@ const RdvSchema = new mongoose.Schema({
     voitureIds: [voitureRdvSchema]
 });
 
-RdvSchema.statics.TriRdvs = function(rdvs) {
+RdvSchema.statics.TriRdvsC = function(rdvs) {
     return rdvs.sort((a, b) => {
         if (new Date(a.daterdv).getTime() !== new Date(b.daterdv).getTime()) {
             return new Date(a.daterdv) - new Date(b.daterdv); // Tri par date
@@ -30,7 +49,7 @@ RdvSchema.statics.listBlocDispo = async function (date) {
 
         const blocreserve = await this.find({ daterdv: { $gte: startOfDay, $lte: endOfDay } }).distinct('idbloc'); // prend idbloc seulement
         // console.log("Blocs réservés pour", date, ":", blocreserve);
-        const blocdispo = await mongoose.model('Bloc').find({ _id: { $nin: blocreserve } }).sort({ ordre: 1 }); // Tri pas ordre
+        const blocdispo = await mongoose.model('Bloc').find({ _id: { $nin: blocreserve } }).sort({ ordre: 1 }); // Tri pas ordre ,  $nin : not In
         return blocdispo;
     } catch (error) {
         console.error("Erreur lors de la récupération des blocs disponibles :", error);
