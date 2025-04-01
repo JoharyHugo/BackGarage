@@ -7,15 +7,15 @@ const devisMatérielSchema = new mongoose.Schema({
 });
 
 const devisSousServiceSchema = new mongoose.Schema({
-    idsousservice: { type: mongoose.Schema.Types.ObjectId, ref: 'SousService', required: true },
-    idstatut: { type: mongoose.Schema.Types.ObjectId, ref: '', required: true },
+    idsousservice: { type: mongoose.Schema.Types.ObjectId, ref: 'SousService',required: true },
+    idstatut: { type: mongoose.Schema.Types.ObjectId, ref: 'Statut', required: true },
     tarif: { type: Number, required: true }, 
     devisMatériel: [devisMatérielSchema] 
 });
 
 const devisServiceSchema = new mongoose.Schema({
     idservice: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
-    devis: [devisSousServiceSchema]
+    devisSsService: [devisSousServiceSchema]
 });
 
 const voitureRdvSchema = new mongoose.Schema({
