@@ -66,16 +66,6 @@ router.post('/ajouterTarif', protect, async (req, res) => {
     }
 });
 
-// liste de tous les services
-router.get('/listService', protect, async (req, res) => {
-    try {
-        const services = await Service.find().select('_id nom'); ;
-        res.json(services);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
 // liste des sous-services pour un services
 router.get('/listSsServbyService', protect, async (req, res) => {
     try {
