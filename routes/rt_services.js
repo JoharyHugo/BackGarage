@@ -66,10 +66,20 @@ router.post('/ajouterTarif', protect, async (req, res) => {
     }
 });
 
-// liste des sous-services pour un services
-router.get('/listSsServbyService', protect, async (req, res) => {
+// liste de tous les services
+router.get('/listService', protect, async (req, res) => {
     try {
-        const { idService } = req.body;
+        const services = await Service.find().select('_id nom'); ;
+        res.json(services);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// liste des sous-services pour un services
+router.get('/listSsServbyService/:idService', protect, async (req, res) => {
+    try {
+        const { idService } = req.params;
         const service = await Service.findById(idService)
             .populate({
                 path: 'sousServices', 
@@ -140,6 +150,19 @@ router.get('/listSsServCateg', protect, async (req, res) => {
     }
 });
 
-
+// ajouter des mécaniciens à un service
+router.post('/ajoutermecaniciens', protect, async (req, res) => {
+    const { serviceId, mecanicienIds } = req.body; 
+    try {
+        const service = await Service.findById(serviceId);
+        if (!service) return res.status(404).json({ success: false, message: "Service non trouvé." });
+        const result = await service.ajouterMecaniciens(mecanicienIds);
+        if (result.success) {return res.status(200).json(result);}
+        else {return res.status(400).json(result); }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Une erreur est survenue." });
+    }
+});
 
 module.exports = router;

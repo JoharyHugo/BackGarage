@@ -63,9 +63,9 @@ router.get('/listRdvDate/:datetri?', protect, async (req, res) => {
 });
 
 // liste de voiture pour tel RDV
-router.get('/listVoituresRdv', protect, async (req, res) => {
+router.get('/listVoituresRdv/:rdvId', protect, async (req, res) => {
     try {
-        const { rdvId } = req.body; 
+        const { rdvId } = req.params; 
         const rdv = await Rdv.findById(rdvId)
             .populate({
                 path: 'voitureIds.voiture',
