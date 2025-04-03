@@ -42,13 +42,10 @@ const connection = async (req, res, nomprofil) => {
             return res.status(400).json({ message: `Profil "${nomprofil}" introuvable` });
         }
         const user = await Utilisateur.findOne({ email, idprofil: profil.id });
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur non trouvé' });
-        }
+        if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
         const isMatch = await user.matchMotdepasse(motdepasse); // comparaison mdp
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Mot de passe incorrect' });
-        }
+        if (!isMatch) return res.status(400).json({ message: 'Mot de passe incorrect' });
+        await UtilisateurToken.verifierEtSupprimerTokens(user._id);
         const token = jwt.sign(
             { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
@@ -77,7 +74,6 @@ const getUtilisateurConnecte = async (req, res) => {
         res.status(500).json({ message: 'Erreur serveur' });
     }
 };
-
   
 // liste les profils
 router.get('/listProfil', async (req, res) => {
@@ -88,6 +84,22 @@ router.get('/listProfil', async (req, res) => {
   res.status(500).json({ message: error.message });
   }
  })
+
+// Déconnexion
+router.post('/deconnexion', protect, async (req, res) => {
+    try {
+        const userId = req.user.userId; 
+        const result = await UtilisateurToken.deleteOne({ idutilisateur: userId });
+
+        if (result.deletedCount === 0) {
+            return res.status(400).json({ message: 'Aucun token trouvé pour cet utilisateur' });
+        }
+        res.json({ message: 'Déconnexion réussie' });
+    } catch (error) {
+        console.error("Erreur lors de la déconnexion:", error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
 
 // Routes 
 router.post('/client/inscription', (req, res) => inscription(req, res, 'Client'));
