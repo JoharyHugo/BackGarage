@@ -158,9 +158,9 @@ router.post('/ajoutDevisRdvVoiture', protect, async (req, res) => {
 });
 
 // liste devis SERVICE & sous service pour tel voiture pour tel rdv
-router.post('/detailsDevisSousService', protect, async (req, res) => {
+router.get('/detailsDevisSousService/:rdvId/:idVoiture', protect, async (req, res) => {
     try {
-        const { rdvId, idVoiture } = req.body; 
+        const { rdvId, idVoiture } = req.params; 
         const rdv = await Rdv.findById(rdvId)
             .populate({ path: 'voitureIds.voiture', model: 'Voiture'
             })
