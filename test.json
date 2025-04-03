@@ -147,3 +147,5 @@ db.statut.insertMany([
   "serviceId": "",
   "categorieId": ""
 }
+
+ao am le data.json
