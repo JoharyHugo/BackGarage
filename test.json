@@ -128,7 +128,7 @@ db.profil.insertMany([
 // PUT http://localhost:5000/api/rdv/presence ou  absence
   {
     "rdvId": ""
-}
+  }
 
 // liste voiture pour un rdv : admin/listVoituresRdv
 {
