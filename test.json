@@ -147,3 +147,8 @@ db.statut.insertMany([
   "serviceId": "",
   "categorieId": ""
 }
+
+//ao am le data.json
+rdv/admin/listVoituresRdv // body rdvId liste voiture pour un rdv
+service/listService // liste de tous les services
+service/listSsServbyService // body idService liste des sous services par idService
