@@ -69,7 +69,7 @@ router.get('/listVoituresRdv/:rdvId', protect, async (req, res) => {
         const rdv = await Rdv.findById(rdvId)
             .populate({
                 path: 'voitureIds.voiture',
-                select: 'immatriculation idmarque idcategorie _id',
+                select: 'nomvoiture immatriculation idmarque idcategorie _id',
                 populate: [
                     { path: 'idmarque', select: 'nommarque' },
                     { path: 'idcategorie', select: 'nomcategorie' }
