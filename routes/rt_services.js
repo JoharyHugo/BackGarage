@@ -95,9 +95,9 @@ router.get('/listSsServbyService/:idService', protect, async (req, res) => {
 });
 
 // liste des tarif par sous-service et catégorie
-router.get('/listTarifbySsService', protect, async (req, res) => {
+router.get('/listTarifbySsService/:idService/:idSousService', protect, async (req, res) => {
     try {
-        const { idService, idSousService } = req.body; 
+        const { idService, idSousService } = req.params; 
         const service = await Service.findById(idService).populate('sousServices');
         const sousService = service.sousServices.find(ss => ss._id.toString() === idSousService);
         await SousService.populate(sousService, { path: 'tarifs.idcategorie' });
@@ -114,9 +114,9 @@ router.get('/listTarifbySsService', protect, async (req, res) => {
 });
 
 // Liste des sous-services par service et catégorie
-router.get('/listSsServCateg', protect, async (req, res) => {
+router.get('/listSsServCateg/:serviceId/:categorieId', protect, async (req, res) => {
     try {
-        const { serviceId, categorieId } = req.body; 
+        const { serviceId, categorieId } = req.params; 
         const service = await Service.findById(serviceId)
             .populate({
                 path: 'sousServices',
@@ -131,7 +131,6 @@ router.get('/listSsServCateg', protect, async (req, res) => {
                 const tarifsFiltres = sousService.tarifs
                     .filter(tarif => tarif.idcategorie && tarif.idcategorie._id.toString() === categorieId)
                     .map(tarif => ({ prix: tarif.prix, idcategorie: tarif.idcategorie._id, nomcategorie: tarif.idcategorie.nomcategorie}));
-
                 if (tarifsFiltres.length > 0) {
                     return {
                         _id: sousService._id,
