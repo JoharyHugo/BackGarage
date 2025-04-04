@@ -94,7 +94,7 @@ const getListRdvByEtat = async (req, res, etat) => {
         .populate('idclient', 'nom idprofil') 
         .populate({
             path: 'voitureIds.voiture',
-            select: 'immatriculation idmarque idcategorie',
+            select: 'nomvoiture immatriculation idmarque idcategorie',
             populate: [{ path: 'idmarque', select: 'nommarque' }, 
                        { path: 'idcategorie', select: 'nomcategorie' }]
         })
