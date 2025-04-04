@@ -39,6 +39,36 @@ db.etat.insertMany([
     { etat: "devis final" },
   ]);
 
+  db.statut.updateMany(
+  { statut: 'en attente' },
+  { $set: { valeur: 0 } }
+)
+
+db.statut.updateMany(
+  { statut: 'accepté' },
+  { $set: { valeur: 0 } }
+)
+
+db.statut.updateMany(
+  { statut: 'refusé' },
+  { $set: { valeur: 0 } }
+)
+
+
+db.statut.updateMany(
+  { statut: 'en cours' },
+  { $set: { valeur: 5 } }
+)
+
+db.statut.updateMany(
+  { statut: 'terminé' },
+  { $set: { valeur: 10 } }
+)
+
+
+
+
+
 db.blocheure.insertMany([
     { bloc: "7h-8h", ordre: 1 },
     { bloc: "8h-9h", ordre: 2 },
@@ -158,7 +188,7 @@ db.piece.insertMany([
     "description" : "Contrôle et ajustement du système d’embrayage pour assurer un ..."
 }
 
-// ADM - ajout tarif pour tel sous service service/ajouterTarif
+// ADM - ajout tarif pour tel sous service  
 {
     "idService" : "",
     "idSousService" : "",
@@ -179,6 +209,7 @@ db.piece.insertMany([
 {
     "rdvId": "",   
     "idService": "", 
+    "idCategorie": "", 
     "idVoiture": "",
     "devis": [
         {
@@ -217,10 +248,23 @@ db.piece.insertMany([
 
 // ADM - ajout un mécanicine pour un service service/ajoutermecaniciens
 {
-    "serviceId": "67ead8fc3272b761086e2cf7",
+    "serviceId": "",
    "mecanicienIds": [
-    "67ee4fdb7f5ae7fc14caf9ed"
+    ""
 ]
 }
 
-// MEC - liste tâche voiture pour tel service
+// MEC affecter à un service
+{
+    "rdvId": "",   
+    "idSousService": "",
+    "idVoiture": ""
+}
+
+// MEC - terminé un sous service sousservices/termine
+{
+    "rdvId": "",   
+    "idSousService": "",
+    "idVoiture": ""
+}
+

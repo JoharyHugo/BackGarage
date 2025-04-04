@@ -14,7 +14,7 @@ const Categorie = require('../models/md_categorie_vehicule');
 const Statut = require('../models/md_statut');
 const Piece = require('../models/md_piece');
 
-// import route
+// import fonction route
 const { checkRdv } = require('./rt_rdv_admin');
 
 // import middleware
@@ -177,6 +177,7 @@ const checkSousService = async (req, res, check) => {
     try {
       const { rdvId, idVoiture, idSousService } = req.body;  
       const statutObj = await Statut.findOne({ statut: check });
+      console.log("-----",statutObj)
       const rdv = await Rdv.findById(rdvId).populate('voitureIds.voiture').exec();
   
       const voiture = rdv.voitureIds.find(v => v.voiture._id.toString() === idVoiture);
@@ -185,18 +186,16 @@ const checkSousService = async (req, res, check) => {
       voiture.devis.forEach(devis => {
         devis.devisSsService.forEach(ss => {
             if (ss.idsousservice.toString() === idSousService) {
-            ss.idstatut = statutObj._id; // Mettre à jour avec le nouvel ID du statut
+            ss.idstatut = statutObj._id; 
             sousServiceTrouvé = true;
           }
         });
       });
   
       if (!sousServiceTrouvé) {
-        console.log("⚠️ Sous-service non trouvé:", idSousService);
+        // console.log("⚠️ Sous-service non trouvé:", idSousService);
         return res.status(404).json({ message: "Sous-service non trouvé." });
       }
-  
-      // Sauvegarder les modifications dans la base
       await rdv.save();
   
       return res.status(200).json({ message: 'Statut du sous-service mis à jour avec succès.' });
@@ -206,6 +205,7 @@ const checkSousService = async (req, res, check) => {
     }
   };
 
+// route modification statut de sous-service
 router.put('/devis/refuse', (req, res) => checkSousService(req, res, 'refusé'));
 
 // Route pour RDV  devis final
@@ -213,3 +213,4 @@ router.put('/final', (req, res) => checkRdv(req, res, 'devis final'));
 
 
 module.exports = router;
+module.exports.checkSousService = checkSousService;

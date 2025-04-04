@@ -11,6 +11,7 @@ const rt_rdv_client = require('./routes/rt_rdv_client');
 const rt_rdv_admin = require('./routes/rt_rdv_admin');
 const rt_service = require('./routes/rt_service');
 const rt_tache_meca = require('./routes/rt_tache_meca');
+const rt_avancement_client = require('./routes/rt_avancement_client');
 
 const app = express(); 
 const PORT = process.env.PORT || 5000;
@@ -33,5 +34,7 @@ app.use('/api/rdv', rt_rdv_client);
 app.use('/api/rdv/admin', rt_rdv_admin); 
 app.use('/api/service', rt_service); 
 app.use('/api/tache/mecanicien', rt_tache_meca); 
+app.use('/api/tableau/client', rt_avancement_client); 
+
 
 app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`))
