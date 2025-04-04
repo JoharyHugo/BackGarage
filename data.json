@@ -179,7 +179,6 @@ db.piece.insertMany([
 {
     "rdvId": "",   
     "idService": "", 
-    "idCategorie": "", 
     "idVoiture": "",
     "devis": [
         {
