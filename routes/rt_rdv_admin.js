@@ -69,7 +69,7 @@ router.get('/listVoituresRdv/:rdvId', protect, async (req, res) => {
         const rdv = await Rdv.findById(rdvId)
             .populate({
                 path: 'voitureIds.voiture',
-                select: 'immatriculation idmarque idcategorie _id',
+                select: 'nomvoiture immatriculation idmarque idcategorie _id',
                 populate: [
                     { path: 'idmarque', select: 'nommarque' },
                     { path: 'idcategorie', select: 'nomcategorie' }
@@ -132,13 +132,18 @@ router.post('/ajoutDevisRdvVoiture', protect, async (req, res) => {
         const service = await Service.findById(idService).exec();
         if (!service)   return res.status(404).json({ message: "Service non trouvé." });
        
-        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture.toString() === idVoiture); // Trouver la voiture associée au rendez-vous
-        const idCategorie = voitureRdv.idcategorie;
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture.toString() === idVoiture);
+        const vt = await Voiture.findById(idVoiture);
+        // console.log("--------------",vt.idcategorie);
+        const idCategorie = vt.idcategorie;
         const devisSousServices = await Promise.all(devis.map(async (devisData) => {
             const { idsousservice } = devisData;
             const sousService = await SousService.findById(idsousservice).exec();
-            const tarif = sousService.tarifs.find(t => t.idcategorie.toString() === idCategorie);
+            // console.log("SSSSSSSSSSSSSSSS",sousService);
+            // console.log("===========",idCategorie);
+            const tarif = sousService.tarifs.find(t => t.idcategorie.toString() === idCategorie.toString());
             const statut = await Statut.findOne({ statut: "en attente" }).exec();
+            // console.log("===========",tarif.prix);
             return {
                 idsousservice: sousService._id,
                 idstatut: statut._id,
