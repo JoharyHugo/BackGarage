@@ -70,9 +70,32 @@ db.piece.insertMany([
     { nompiece: "Pompe à carburant", prix: 150.00 }
   ])
 
+  db.piece.insertMany([
+    // 🔹 Vidange
+    { nompiece: 'Huile moteur', prix: 50 },
+    { nompiece: 'Joint de bouchon de vidange', prix: 5 },
+  
+    // 🔹 Remplacement essuie-glaces
+    { nompiece: 'Liquide lave-glace', prix: 15 },
+    { nompiece: 'Balais d’essuie-glace avant', prix: 30 },
+    { nompiece: 'Balais d’essuie-glace arrière', prix: 25 },
+  
+    // 🔹 Réparation de phares et feux
+    { nompiece: 'Ampoule de phare', prix: 10 },
+    { nompiece: 'Ampoule de feu arrière', prix: 12 },
+    { nompiece: 'Fusibles', prix: 8 },
+    { nompiece: 'Relais de phare', prix: 20 },
+    { nompiece: 'Câblage électrique', prix: 35 },
+  
+    // 🔹 Réparation et remplacement d’embrayage
+    { nompiece: 'Kit d’embrayage', prix: 400 },
+    { nompiece: 'Liquide de transmission', prix: 60 },
+    { nompiece: 'Volant moteur', prix: 300 },
+    { nompiece: 'Fourchette d’embrayage', prix: 45 }
+  ]);
+  
   db.statut.insertMany([
     { statut: 'en attente' },
-    { statut: 'accepté' },
     { statut: 'refusé' },
     { statut: 'en cours' },
     { statut: 'terminé' }
@@ -121,6 +144,11 @@ db.piece.insertMany([
 }
 {
     "idService" : "",
+    "nomSousService" : "Réglage et remplacement de l’embrayage",
+    "description" : "Les peintures automobiles modernes sont presque toujours composées d'un « émail » ..."
+}
+{
+    "idService" : "",
     "nomSousService" : "Réparation des phares et feux",
     "description" : "Inspection, diagnostic et réparation des phares et feux du véhicule, y compris le remplacement des ..."
 } 
@@ -151,6 +179,7 @@ db.piece.insertMany([
 {
     "rdvId": "",   
     "idService": "", 
+    "idCategorie": "", 
     "idVoiture": "",
     "devis": [
         {
@@ -179,9 +208,20 @@ db.piece.insertMany([
         }
     ]
 }
+
 // CLI - accepté un sous service pour tel voiture 
 {
     "rdvId": "",
     "idVoiture" : "",
     "idSousService" : ""
 }
+
+// ADM - ajout un mécanicine pour un service service/ajoutermecaniciens
+{
+    "serviceId": "67ead8fc3272b761086e2cf7",
+   "mecanicienIds": [
+    "67ee4fdb7f5ae7fc14caf9ed"
+]
+}
+
+// MEC - liste tâche voiture pour tel service

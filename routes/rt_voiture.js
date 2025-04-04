@@ -24,7 +24,7 @@ router.post('/ajouterMarque', protect, async (req, res) => {
 });
 
 // liste Marque
-router.get('/listMarque',  async (req, res) => {
+router.get('/listMarque', protect, async (req, res) => {
   try {
   const marque = await Marque.find();
   res.json({ marque });
@@ -45,7 +45,7 @@ router.post('/ajouterCategorie', protect, async (req, res) => {
 });
 
 // liste des catégories
-router.get('/listCategorie',  async (req, res) => {
+router.get('/listCategorie', protect, async (req, res) => {
   try {
   const categorie = await Categorie.find();
   res.json({ categorie });
@@ -74,11 +74,10 @@ router.post('/ajouterVoiture', protect, async (req, res) => {
 // lister les voitures pour un client
 router.get('/listVoiturebyclient', protect, async (req, res) => {
   try {
-  // const voitures = await Voiture.find({ idclient: req.user.userId });
   const voitures = await Voiture.find({ idclient: req.user.userId })
-  .populate('idmarque') // Remplir complètement l'objet "Marque"
-  .populate('idcategorie'); // Remplir complètement l'objet "Categorie"
-  console.log("ID =====",req.user.userId );
+  .populate('idmarque') //JOIN "Marque"
+  .populate('idcategorie'); // JOIN "Categorie"
+  //console.log("ID =====",req.user.userId );
   if (voitures.length === 0) {
     return res.status(400).json({ message: 'Aucune voiture trouvée pour cet utilisateur.' });
   }

@@ -10,6 +10,7 @@ const devisSousServiceSchema = new mongoose.Schema({
     idsousservice: { type: mongoose.Schema.Types.ObjectId, ref: 'SousService',required: true },
     idstatut: { type: mongoose.Schema.Types.ObjectId, ref: 'Statut', required: true },
     tarif: { type: Number, required: true }, 
+    total: { type: Number, required: true }, 
     devisMatériel: [devisMatérielSchema] 
 });
 
