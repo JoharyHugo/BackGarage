@@ -242,6 +242,57 @@ router.post('/ajoutDevisRdvPiece', protect, async (req, res) => {
     }
 });
 
+// liste pièce par sous-service
+const getListPieceSsService = async (req, res, etat) => {
+    try {
+        const etatq = await Etat.findOne({ etat });
+        if (!etatq) return res.status(404).json({ message: 'État non trouvé' });
+
+        const statutRefuse = await Statut.findOne({ statut: 'refusé' });
+        if (!statutRefuse) return res.status(404).json({ message: 'Statut "refusé" introuvable' });
+
+        let rdvs = await Rdv.find({ 
+            idetat: etatq._id, 
+            idclient: req.user.userId 
+        })
+        .populate('idbloc') 
+        .populate('idclient', 'nom idprofil') 
+        .populate({
+            path: 'voitureIds.voiture',
+            select: 'immatriculation idmarque idcategorie',
+            populate: [
+                { path: 'idmarque', select: 'nommarque' }, 
+                { path: 'idcategorie', select: 'nomcategorie' }
+            ]
+        })
+        .populate({ path: 'voitureIds.devis.idservice', model: 'Service', select: 'nom' })
+        .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService', select: 'nom' })
+        .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut', select: 'statut' })
+        .sort({ daterdv: -1, 'idbloc.ordre': -1 });
+
+        rdvs = rdvs.map(rdv => {
+            rdv.voitureIds = rdv.voitureIds.map(voiture => {
+                voiture.devis = voiture.devis.map(devis => {
+                    devis.devisSsService = devis.devisSsService.filter(ssService => {
+                        return ssService.idstatut && ssService.idstatut._id.toString() !== statutRefuse._id.toString();
+                    });
+                    return devis;
+                });
+                return voiture;
+            });
+            return rdv;
+        });
+
+        res.status(200).json(rdvs);
+    } catch (error) {
+        console.error(`Erreur lors de la récupération des RDVs (${etat}):`, error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+
+
+
+
 module.exports = router;
 module.exports.checkRdv = checkRdv;
 
