@@ -245,4 +245,3 @@ router.post('/ajoutDevisRdvPiece', protect, async (req, res) => {
 module.exports = router;
 module.exports.checkRdv = checkRdv;
 
-
