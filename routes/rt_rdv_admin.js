@@ -242,55 +242,59 @@ router.post('/ajoutDevisRdvPiece', protect, async (req, res) => {
     }
 });
 
-// liste pièce par sous-service
-const getListPieceSsService = async (req, res, etat) => {
+router.get('/getListPieceBySsServ/:rdvId/:idVoiture/:idSsService', protect, async (req, res) => {
     try {
-        const etatq = await Etat.findOne({ etat });
-        if (!etatq) return res.status(404).json({ message: 'État non trouvé' });
+        const { rdvId, idVoiture, idSsService } = req.params;
 
-        const statutRefuse = await Statut.findOne({ statut: 'refusé' });
-        if (!statutRefuse) return res.status(404).json({ message: 'Statut "refusé" introuvable' });
-
-        let rdvs = await Rdv.find({ 
-            idetat: etatq._id, 
-            idclient: req.user.userId 
-        })
-        .populate('idbloc') 
-        .populate('idclient', 'nom idprofil') 
-        .populate({
-            path: 'voitureIds.voiture',
-            select: 'immatriculation idmarque idcategorie',
-            populate: [
-                { path: 'idmarque', select: 'nommarque' }, 
-                { path: 'idcategorie', select: 'nomcategorie' }
-            ]
-        })
-        .populate({ path: 'voitureIds.devis.idservice', model: 'Service', select: 'nom' })
-        .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService', select: 'nom' })
-        .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut', select: 'statut' })
-        .sort({ daterdv: -1, 'idbloc.ordre': -1 });
-
-        rdvs = rdvs.map(rdv => {
-            rdv.voitureIds = rdv.voitureIds.map(voiture => {
-                voiture.devis = voiture.devis.map(devis => {
-                    devis.devisSsService = devis.devisSsService.filter(ssService => {
-                        return ssService.idstatut && ssService.idstatut._id.toString() !== statutRefuse._id.toString();
-                    });
-                    return devis;
-                });
-                return voiture;
+        const rdv = await Rdv.findById(rdvId)
+            .populate({
+                path: 'voitureIds.voiture',
+                model: 'Voiture'
+            })
+            .populate({
+                path: 'voitureIds.devis.idservice',
+                model: 'Service'
+            })
+            .populate({
+                path: 'voitureIds.devis.devisSsService.idsousservice',
+                model: 'SousService'
+            })
+            .populate({
+                path: 'voitureIds.devis.devisSsService.devisMatériel.idpiece',
+                model: 'Piece' // Assure-toi que le modèle "Piece" existe bien
             });
-            return rdv;
+
+        if (!rdv) return res.status(404).json({ message: "Rendez-vous non trouvé." });
+
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
+        if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+
+        let pieces = [];
+        voitureRdv.devis.forEach(devis => {
+            devis.devisSsService.forEach(ss => {
+                if (ss.idsousservice && ss.idsousservice._id.toString() === idSsService) {
+                    if (ss.devisMatériel && ss.devisMatériel.length > 0) {
+                        ss.devisMatériel.forEach(mat => {
+                            pieces.push({
+                                nomPiece: mat.idpiece.nompiece,  
+                                prix: mat.prix,
+                                quantite: mat.quantite,
+                                total: mat.prix * mat.quantite
+                            });
+                        });
+                    }
+                }
+            });
         });
 
-        res.status(200).json(rdvs);
+        if (pieces.length === 0) return res.status(404).json({ message: "Aucune pièce trouvée pour ce sous-service." });
+
+        res.status(200).json(pieces);
     } catch (error) {
-        console.error(`Erreur lors de la récupération des RDVs (${etat}):`, error);
-        res.status(500).json({ message: 'Erreur serveur' });
+        console.error(error);
+        res.status(500).json({ message: error.message });
     }
-};
-
-
+});
 
 
 module.exports = router;
