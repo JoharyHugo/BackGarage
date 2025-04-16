@@ -242,6 +242,47 @@ router.post('/ajoutDevisRdvPiece', protect, async (req, res) => {
     }
 });
 
+// liste pièce pour un sous service de RDV et voiture (détails pièce
+router.get('/getListPieceBySsServ/:rdvId/:idVoiture/:idSsService', protect, async (req, res) => {
+    try {
+        const { rdvId, idVoiture, idSsService } = req.params;
+        const rdv = await Rdv.findById(rdvId)
+                             .populate({ path: 'voitureIds.voiture', model: 'Voiture'})
+                             .populate({ path: 'voitureIds.devis.idservice', model: 'Service'})
+                             .populate({path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'})
+                             .populate({ path: 'voitureIds.devis.devisSsService.devisMatériel.idpiece', model: 'Piece'});
+
+        if (!rdv) return res.status(404).json({ message: "Rendez-vous non trouvé." });
+
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
+        if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+
+        let pieces = [];
+        voitureRdv.devis.forEach(devis => {
+            devis.devisSsService.forEach(ss => {
+                if (ss.idsousservice && ss.idsousservice._id.toString() === idSsService) {
+                    if (ss.devisMatériel && ss.devisMatériel.length > 0) {
+                        ss.devisMatériel.forEach(mat => {
+                            pieces.push({
+                                nomPiece: mat.idpiece.nompiece,  
+                                prix: mat.prix,
+                                quantite: mat.quantite,
+                                total: mat.prix * mat.quantite
+                            });
+                        });
+                    }
+                }
+            });
+        });
+        if (pieces.length === 0) return res.status(404).json({ message: "Aucune pièce trouvée pour ce sous-service." });
+        res.status(200).json(pieces);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 module.exports = router;
 module.exports.checkRdv = checkRdv;
 
