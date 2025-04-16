@@ -101,23 +101,23 @@ db.piece.insertMany([
   ])
 
   db.piece.insertMany([
-    // 🔹 Vidange
+    //  Vidange
     { nompiece: 'Huile moteur', prix: 50 },
     { nompiece: 'Joint de bouchon de vidange', prix: 5 },
   
-    // 🔹 Remplacement essuie-glaces
+    //  Remplacement essuie-glaces
     { nompiece: 'Liquide lave-glace', prix: 15 },
     { nompiece: 'Balais d’essuie-glace avant', prix: 30 },
     { nompiece: 'Balais d’essuie-glace arrière', prix: 25 },
   
-    // 🔹 Réparation de phares et feux
+    //  Réparation de phares et feux
     { nompiece: 'Ampoule de phare', prix: 10 },
     { nompiece: 'Ampoule de feu arrière', prix: 12 },
     { nompiece: 'Fusibles', prix: 8 },
     { nompiece: 'Relais de phare', prix: 20 },
     { nompiece: 'Câblage électrique', prix: 35 },
   
-    // 🔹 Réparation et remplacement d’embrayage
+    //  Réparation et remplacement d’embrayage
     { nompiece: 'Kit d’embrayage', prix: 400 },
     { nompiece: 'Liquide de transmission', prix: 60 },
     { nompiece: 'Volant moteur', prix: 300 },
