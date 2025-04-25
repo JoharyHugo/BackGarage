@@ -167,41 +167,49 @@ router.get('/detailsDevisSousService/:rdvId/:idVoiture', protect, async (req, re
     try {
         const { rdvId, idVoiture } = req.params; 
         const rdv = await Rdv.findById(rdvId)
-            .populate({ path: 'voitureIds.voiture', model: 'Voiture'
-            })
-            .populate({ path: 'voitureIds.devis.idservice', model: 'Service'
-            })
-            .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'
-            });
+            .populate({ path: 'voitureIds.voiture', model: 'Voiture' })
+            .populate({ path: 'voitureIds.devis.idservice', model: 'Service' })
+            .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService' });
 
-        if (!rdv)  return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        if (!rdv) return res.status(404).json({ message: "Rendez-vous non trouvé." });
+
         const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
         if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+
         const devisDetails = voitureRdv.devis.reduce((acc, devis) => {
-            const serviceName = devis.idservice.nom;
-            if (!acc[serviceName]) {
-                acc[serviceName] = [];
+            const idService = devis.idservice._id.toString();
+            const nomService = devis.idservice.nom;
+
+            if (!acc[idService]) {
+                acc[idService] = {
+                    idService,
+                    nomService,
+                    sousServices: []
+                };
             }
+
             devis.devisSsService.forEach(ss => {
-                acc[serviceName].push({
-                    nomSousService: ss.idsousservice.nom,
-                    tarif: ss.tarif,
-                    total: ss.total
-                });
+                if (ss.idsousservice) {
+                    acc[idService].sousServices.push({
+                        idSousService: ss.idsousservice._id.toString(),
+                        nomSousService: ss.idsousservice.nom,
+                        tarif: ss.tarif,
+                        total: ss.total
+                    });
+                }
             });
+
             return acc;
         }, {});
 
-        const result = Object.entries(devisDetails).map(([serviceName, sousServices]) => ({
-            nomService: serviceName,
-            sousServices
-        }));
+        const result = Object.values(devisDetails); // convertit en tableau
         res.status(200).json(result);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
     }
 });
+
 
 //  ajout devis pièces
 router.post('/ajoutDevisRdvPiece', protect, async (req, res) => {
