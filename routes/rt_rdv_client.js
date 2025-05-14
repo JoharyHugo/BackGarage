@@ -211,6 +211,48 @@ router.put('/devis/refuse', (req, res) => checkSousService(req, res, 'refusé'))
 // Route pour RDV  devis final
 router.put('/final', (req, res) => checkRdv(req, res, 'devis final'));
 
+// Afficher PDF devis Final 
+router.get('/pdfDetailDevis/:rdvId/:idVoiture', protect, async (req, res) => {
+    try {
+        const { rdvId, idVoiture } = req.params; 
+        const rdv = await Rdv.findById(rdvId)
+            .populate({ path: 'voitureIds.voiture', model: 'Voiture'})
+            .populate({ path: 'voitureIds.devis.idservice', model: 'Service'})
+            .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'})
+            .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut' });
+
+        if (!rdv)  return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
+        if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+        const devisDetails = voitureRdv.devis.reduce((acc, devis) => {
+            const serviceName = devis.idservice.nom;
+            if (!acc[serviceName]) {
+                acc[serviceName] = [];
+            }
+            devis.devisSsService.forEach(ss => {
+                if (ss.idstatut && ss.idstatut.statut === "accepté") {
+                    acc[serviceName].push({
+                        nomSousService: ss.idsousservice.nom,
+                        tarif: ss.tarif,
+                        nbr_piece: ss.devisMatériel ? ss.devisMatériel.length : 0,
+                        total: ss.total,
+                        statut: ss.idstatut
+                    });
+                }
+            });
+            return acc;
+        }, {});
+
+        const result = Object.entries(devisDetails).map(([serviceName, sousServices]) => ({
+            nomService: serviceName,
+            sousServices
+        }));
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
 module.exports.checkSousService = checkSousService;
