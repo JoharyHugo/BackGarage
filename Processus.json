@@ -1,0 +1,142 @@
+//CLI - CONNEXION =>POST  http://localhost:5000/api/client/login
+{
+    "email": "alice.martin@mail.com",
+    "motdepasse": "pwd123!"
+}
+//CLI - VOITURE =>POST http://localhost:5000/api/client/ajouterVoiture
+{
+  "nomvoiture": "Ford Focus",
+  "immatriculation": "7890GHJ",
+  "idmarque": "67eacfb1358af8bbe2b7123a",
+  "idcategorie": "67eacfb1358af8bbe2b71246"
+}
+{
+  "nomvoiture": "Toyota Corolla",
+  "immatriculation": "5678XYZ",
+  "idmarque": "67eacfb1358af8bbe2b71239", 
+  "idcategorie": "67eacfb1358af8bbe2b71246"
+}
+
+
+//CLI - RDV =>POST http://localhost:5000/api/rdv/ajouterRdv
+{
+    "idbloc": "67eacfb1358af8bbe2b71251",
+    "daterdv": "2025-08-23",
+    "voitureIds": [
+      "68a428e5ca674ecddcade67f",
+      "68a4293bca674ecddcade682"
+    ]
+}
+
+//CLI - VOITURE =>GET http://localhost:5000/api/client/listVoiturebyclient
+
+//----------------------------------------------------------------------------------------------------------------
+
+//ADM - ADMIN =>POST http://localhost:5000/api/manager/login
+{
+    "email": "jean.dupont@mail.com",
+    "motdepasse": "mdp123!"
+}
+//ADM - RDV =>GET  http://localhost:5000/api/rdv/admin/listRdv/enattente
+
+//ADM - RDV =>PUT  http://localhost:5000/api/rdv/admin/presence
+{
+    "rdvId":"68a42d1eefa5ea8c685c090a"
+}
+//ADM - RDV =>GET  http://localhost:5000/api/rdv/admin/listRdv/presence
+
+//ADM - RDV =>POST http://localhost:5000/api/rdv/admin/ajoutDevisRdvVoiture
+{
+    "rdvId": "68a42d1eefa5ea8c685c090a",   
+    "idService": "67ead8f83272b761086e2cf4", 
+    "idCategorie": "67eacfb1358af8bbe2b71246", 
+    "idVoiture": "68a428e5ca674ecddcade67f",
+    "devis": [
+        {
+            "idsousservice": "67ead9123272b761086e2cfb"
+        }
+    ]
+}
+{
+    "rdvId": "68a42d1eefa5ea8c685c090a",   
+    "idService": "67ead8fc3272b761086e2cf7", 
+    "idCategorie": "67eacfb1358af8bbe2b71246", 
+    "idVoiture": "68a4293bca674ecddcade682",
+    "devis": [
+        {
+            "idsousservice": "67ead96deda6f5bd739cc431"
+        },
+        {
+            "idsousservice": "67ead971eda6f5bd739cc436"
+        }
+    ]
+}
+
+//ADM - RDV =>POST http://localhost:5000/api/rdv/admin/ajoutDevisRdvPiece
+{
+    "rdvId": "68a42d1eefa5ea8c685c090a",   
+    "idService": "67ead8f83272b761086e2cf4", 
+    "idSousService": "67ead9123272b761086e2cfb", 
+    "idVoiture": "68a428e5ca674ecddcade67f",
+    "devis": [
+        {
+            "idpiece": "67ecb824929572fbf5b71236",
+            "quantite" : 2 
+        }
+    ]
+}
+{
+   "rdvId": "68a42d1eefa5ea8c685c090a",   
+    "idService": "67ead8fc3272b761086e2cf7", 
+    "idSousService": "67ead96deda6f5bd739cc431", 
+    "idVoiture": "68a4293bca674ecddcade682",
+    "devis": [
+        {
+            "idpiece": "67ecb824929572fbf5b7123b",
+            "quantite" : 2
+        },
+        {
+            "idpiece": "67ecb824929572fbf5b7123e",
+            "quantite" : 2
+        }
+    ]
+}
+{
+    "rdvId": "68a42d1eefa5ea8c685c090a",   
+     "idService": "67ead8fc3272b761086e2cf7", 
+     "idSousService": "67ead971eda6f5bd739cc436", 
+     "idVoiture": "68a4293bca674ecddcade682",
+     "devis": [
+         {
+             "idpiece": "67ecb9ce929572fbf5b71244",
+             "quantite" : 1
+         }
+     ]
+ }
+ 
+//ADM - RDV =>PUT  http://localhost:5000/api/rdv/admin/confirmation
+{
+    "rdvId":"68a42d1eefa5ea8c685c090a"
+}
+//-----------------------------------------------------------------------------------------------------
+//CLI - RDV =>GET http://localhost:5000/api/rdv/listRdv/confirmation
+
+//CLI - DEVIS =>GET http://localhost:5000/api/rdv/detailsDevisSousService/:rdvId/:idVoiture
+            //  GET http://localhost:5000/api/rdv/detailsDevisSousService/68a42d1eefa5ea8c685c090a/68a428e5ca674ecddcade67f
+            //  GET http://localhost:5000/api/rdv/detailsDevisSousService/68a42d1eefa5ea8c685c090a/68a4293bca674ecddcade682
+
+//CLI - DEVIS =>PUT http://localhost:5000/api/rdv/devis/refuse
+{
+"rdvId": "68a42d1eefa5ea8c685c090a",
+"idVoiture": "68a4293bca674ecddcade682",
+"idSousService": "67ead971eda6f5bd739cc436" 
+}
+
+//CLI - DEVIS =>GET http://localhost:5000/api/rdv/pdfDetailDevis/68a42d1eefa5ea8c685c090a/68a428e5ca674ecddcade67f
+
+//CLI - DEVIS =>GET http://localhost:5000/api/rdv/pdfDetailDevis/68a42d1eefa5ea8c685c090a
+
+//CLI - DEVIS =>PUT http://localhost:5000/api/rdv/nonvalidation2/68a42d1eefa5ea8c685c090a
+
+
+//CLI - DEVIS =>PUT http://localhost:5000/api/rdv/devis/final

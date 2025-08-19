@@ -133,37 +133,44 @@ router.get('/listRdv/final', protect, (req, res) => getListRdvFinalByEtat(req, r
 router.get('/listRdv/termine', protect, (req, res) => getListRdvFinalByEtat(req, res, 'terminé'));
 
 // liste devis SERVICE & sous service pour tel voiture pour tel rdv
-router.post('/detailsDevisSousService', protect, async (req, res) => {
+router.get('/detailsDevisSousService/:rdvId/:idVoiture', protect, async (req, res) => {
     try {
-        const { rdvId, idVoiture } = req.body; 
+        const { rdvId, idVoiture } = req.params; 
         const rdv = await Rdv.findById(rdvId)
             .populate({ path: 'voitureIds.voiture', model: 'Voiture'})
             .populate({ path: 'voitureIds.devis.idservice', model: 'Service'})
             .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'})
             .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut' });
 
-        if (!rdv)  return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        if (!rdv) return res.status(404).json({ message: "Rendez-vous non trouvé." });
         const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
         if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+
         const devisDetails = voitureRdv.devis.reduce((acc, devis) => {
             const serviceName = devis.idservice.nom;
-            if (!acc[serviceName]) {
-                acc[serviceName] = [];
-            }
+            if (!acc[serviceName]) 
+                acc[serviceName] = { sousServices: [], totalTarif: 0, totalTotal: 0 };
+            
             devis.devisSsService.forEach(ss => {
-                acc[serviceName].push({
+                acc[serviceName].sousServices.push({
                     nomSousService: ss.idsousservice.nom,
                     tarif: ss.tarif,
                     total: ss.total,
                     statut: ss.idstatut
                 });
+                acc[serviceName].totalTarif += ss.tarif;
+                acc[serviceName].totalTotal += ss.total;
             });
+
             return acc;
         }, {});
 
-        const result = Object.entries(devisDetails).map(([serviceName, sousServices]) => ({
+        const result = Object.entries(devisDetails).map(([serviceName, data]) => ({
             nomService: serviceName,
-            sousServices
+            sousServices: data.sousServices,
+            totalTarif: data.totalTarif,
+            totalTotal: data.totalTotal,
+            sommeTotale: data.totalTarif + data.totalTotal
         }));
         res.status(200).json(result);
     } catch (error) {
@@ -209,9 +216,9 @@ const checkSousService = async (req, res, check) => {
 router.put('/devis/refuse', (req, res) => checkSousService(req, res, 'refusé'));
 
 // Route pour RDV  devis final
-router.put('/final', (req, res) => checkRdv(req, res, 'devis final'));
+router.put('/devis/final', (req, res) => checkRdv(req, res, 'devis final'));
 
-// Afficher PDF devis Final 
+// Afficher PDF devis Final par RDV et VOITURE
 router.get('/pdfDetailDevis/:rdvId/:idVoiture', protect, async (req, res) => {
     try {
         const { rdvId, idVoiture } = req.params; 
@@ -219,30 +226,35 @@ router.get('/pdfDetailDevis/:rdvId/:idVoiture', protect, async (req, res) => {
             .populate({ path: 'voitureIds.voiture', model: 'Voiture'})
             .populate({ path: 'voitureIds.devis.idservice', model: 'Service'})
             .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'})
+            .populate({ path: 'voitureIds.devis.devisSsService.devisMatériel.idpiece', model: 'Piece' })
             .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut' });
 
-        if (!rdv)  return res.status(404).json({ message: "Rendez-vous non trouvé." });
-        const voitureRdv = rdv.voitureIds.find(voiture => voiture.voiture._id.toString() === idVoiture);
-        if (!voitureRdv) return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+        if (!rdv)   return res.status(404).json({ message: "Rendez-vous non trouvé." });
+        const voitureRdv = rdv.voitureIds.find(v => v.voiture._id.toString() === idVoiture);
+        if (!voitureRdv)  return res.status(404).json({ message: "Voiture non trouvée dans ce rendez-vous." });
+
         const devisDetails = voitureRdv.devis.reduce((acc, devis) => {
             const serviceName = devis.idservice.nom;
-            if (!acc[serviceName]) {
-                acc[serviceName] = [];
-            }
+            if (!acc[serviceName]) acc[serviceName] = [];
+
             devis.devisSsService.forEach(ss => {
-                if (ss.idstatut && ss.idstatut.statut === "accepté") {
+                if (ss.idstatut && ss.idstatut.statut === "en attente") {
                     acc[serviceName].push({
                         nomSousService: ss.idsousservice.nom,
                         tarif: ss.tarif,
-                        nbr_piece: ss.devisMatériel ? ss.devisMatériel.length : 0,
                         total: ss.total,
-                        statut: ss.idstatut
+                        statut: ss.idstatut,
+                        pieces: ss.devisMatériel.map(mat => ({
+                            nomPiece: mat.idpiece ? mat.idpiece.nompiece : null,
+                            prixUnitaire: mat.prix,
+                            quantite: mat.quantite,
+                            totalPiece: mat.prix * mat.quantite
+                        }))
                     });
                 }
             });
             return acc;
         }, {});
-
         const result = Object.entries(devisDetails).map(([serviceName, sousServices]) => ({
             nomService: serviceName,
             sousServices
@@ -251,6 +263,124 @@ router.get('/pdfDetailDevis/:rdvId/:idVoiture', protect, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
+    }
+});
+
+// Afficher PDF devis Final par RDV 
+router.get('/pdfDetailDevis/:rdvId', protect, async (req, res) => {
+    try {
+        const { rdvId } = req.params; 
+        const rdv = await Rdv.findById(rdvId)
+            .populate({ path: 'voitureIds.voiture', model: 'Voiture'})
+            .populate({ path: 'voitureIds.devis.idservice', model: 'Service'})
+            .populate({ path: 'voitureIds.devis.devisSsService.idsousservice', model: 'SousService'})
+            .populate({ path: 'voitureIds.devis.devisSsService.devisMatériel.idpiece', model: 'Piece' })
+            .populate({ path: 'voitureIds.devis.devisSsService.idstatut', model: 'Statut' });
+
+        if (!rdv)  
+            return res.status(404).json({ message: "Rendez-vous non trouvé." });
+
+        // détails par voiture
+        const voituresDetails = rdv.voitureIds.map(v => {
+            const devisDetails = v.devis.reduce((acc, devis) => {
+                const serviceName = devis.idservice.nom;
+                if (!acc[serviceName]) acc[serviceName] = { sousServices: [], totalTarif: 0, totalTotal: 0, sommeTotal: 0 };
+
+                // statut "en attente"
+                devis.devisSsService.forEach(ss => {
+                    if (ss.idstatut && ss.idstatut.statut === "en attente") {
+                        const pieces = ss.devisMatériel.map(mat => ({
+                            nomPiece: mat.idpiece ? mat.idpiece.nompiece : null,
+                            prixUnitaire: mat.prix,
+                            quantite: mat.quantite,
+                            totalPiece: mat.prix * mat.quantite
+                        }));
+
+                        const sousServiceTotal = ss.tarif + ss.total;
+
+                        acc[serviceName].sousServices.push({
+                            nomSousService: ss.idsousservice.nom,
+                            tarif: ss.tarif,
+                            total: ss.total,
+                            statut: ss.idstatut,
+                            pieces
+                        });
+
+                        acc[serviceName].totalTarif += ss.tarif;
+                        acc[serviceName].totalTotal += ss.total;
+                        acc[serviceName].sommeTotal += sousServiceTotal;
+                    }
+                });
+
+                return acc;
+            }, {});
+
+            return {
+                voiture: {
+                    id: v.voiture._id,
+                    marque: v.voiture.marque,
+                    modele: v.voiture.modele,
+                    immatriculation: v.voiture.immatriculation
+                },
+                devis: Object.entries(devisDetails).map(([serviceName, details]) => ({
+                    nomService: serviceName,
+                    sousServices: details.sousServices,
+                    totalTarif: details.totalTarif,
+                    totalTotal: details.totalTotal,
+                    sommeTotal: details.sommeTotal
+                }))
+            };
+        });
+
+        res.status(200).json({
+            rdv: {
+                id: rdv._id,
+                date: rdv.daterdv,
+                client: rdv.idclient,
+                voitures: voituresDetails
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// 2ème validation du sous-service
+router.put('/nonvalidation2/:rdvId', protect, async (req, res) => {
+    try {
+        const { rdvId } = req.params;
+
+        // Récupérer l'objet Statut "en attente"
+        const statutObj = await Statut.findOne({ statut: "en attente" });
+        if (!statutObj) return res.status(404).json({ message: "Statut 'en attente' introuvable." });
+
+        // Récupérer le RDV
+        const rdv = await Rdv.findById(rdvId).populate('voitureIds.voiture').exec();
+        if (!rdv) return res.status(404).json({ message: "Rendez-vous introuvable." });
+
+        // Parcourir toutes les voitures et tous les sous-services
+        let sousServiceMisAJour = false;
+        rdv.voitureIds.forEach(voiture => {
+            voiture.devis.forEach(devis => {
+                devis.devisSsService.forEach(ss => {
+                    ss.idstatut = statutObj._id;
+                    sousServiceMisAJour = true;
+                });
+            });
+        });
+
+        if (!sousServiceMisAJour) {
+            return res.status(404).json({ message: "Aucun sous-service trouvé dans ce RDV." });
+        }
+
+        await rdv.save();
+
+        return res.status(200).json({ message: "Tous les sous-services du RDV ont été mis à jour en 'en attente'." });
+
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour des sous-services :", error);
+        return res.status(500).json({ message: "Erreur serveur." });
     }
 });
 
